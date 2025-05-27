@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit WebStack Data (编辑 WebStack 数据)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/bootstrap.css') }}">
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .link-entry {
+            width: 28%;
+            margin-right: 15px;
+            margin-left: 15px;
+            margin-bottom: 25px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .link-entry input {
+            margin-bottom: 5px;
+        }
+
+        .links-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Edit WebStack Data (编辑 WebStack 数据)</h1>
+<!-- Add Export Button -->
+    <button type="button" class="btn btn-info mt-3" id="export-static-page">Export Static Page (导出静态页面)</button>
+
+    <form action="{{ url_for('save') }}" method="post">
+        {% for category, links in data.items() %}
+        <div class="category-section" data-category="{{ category }}">
+            <div class="form-group">
+                <label for="category_name_{{ category }}">Category Name: 分类名称</label>
+                <input type="text" class="form-control" id="category_name_{{ category }}"
+                    name="category_name_{{ category }}" value="{{ category }}">
+                <input type="hidden" name="original_category_name_{{ category }}" value="{{ category }}">
+            </div>
+            <button type="button" class="btn btn-danger btn-sm delete-category" data-category="{{ category }}">Delete
+                Category (删除分类)</button>
+            <hr>
+            <div class="links-container">
+                {% for link in links %}
+                <div class="link-entry" data-original-url="{{ link.url }}">
+                    <input type="hidden" name="original_url_{{ category }}_{{ loop.index0 }}" value="{{ link.url }}">
+                    <input type="hidden" name="link_status_{{ category }}_{{ loop.index0 }}" value="existing"
+                        class="link-status">
+                    <div class="form-group">
+                        <label for="name_{{ category }}_{{ loop.index0 }}">Name: 名称</label>
+                        <input type="text" class="form-control" id="name_{{ category }}_{{ loop.index0 }}"
+                            name="name_{{ category }}_{{ loop.index0 }}" value="{{ link.name }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="description_{{ category }}_{{ loop.index0 }}">Description: 描述</label>
+                        <input type="text" class="form-control" id="description_{{ category }}_{{ loop.index0 }}"
+                            name="description_{{ category }}_{{ loop.index0 }}" value="{{ link.description }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="url_{{ category }}_{{ loop.index0 }}">URL: 网址</label>
+                        <input type="text" class="form-control" id="url_{{ category }}_{{ loop.index0 }}"
+                            name="url_{{ category }}_{{ loop.index0 }}" value="{{ link.url }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="icon_{{ category }}_{{ loop.index0 }}">Icon: 图标</label>
+                        <input type="text" class="form-control" id="icon_{{ category }}_{{ loop.index0 }}"
+                            name="icon_{{ category }}_{{ loop.index0 }}" value="{{ link.icon }}">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm delete-link">Delete Link (删除链接)</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm add-link-to-category"
+                data-category="{{ category }}">Add Link (添加链接)</button>
+        </div>
+        {% endfor %}
+
+        <div id="new-category-section" style="display: none;">
+            <h3>Add New Category (添加新分类)</h3>
+            <div class="form-group">
+                <label for="new_category_name">New Category Name: 新分类名称</label>
+                <input type="text" class="form-control" id="new_category_name" name="new_category_name">
+            </div>
+            <button type="button" class="btn btn-secondary add-link-to-new-category">Add Link to New Category
+                (为新分类添加链接)</button>
+            <div id="new-category-links">
+                <!-- New links for the new category will be added here by JavaScript -->
+            </div>
+        </div>
+        <button type="button" class="btn btn-success" id="show-add-category">Add New Category (添加新分类)</button>
+
+
+        <input type="hidden" name="deleted_categories" id="deleted_categories" value="">
+        <input type="hidden" name="deleted_links" id="deleted_links" value="">
+
+        <button type="submit" class="btn btn-primary">Save Changes (保存更改)</button>
+    </form>
+
+    
+    <script>
+        // Basic JavaScript for adding/deleting categories/links (client-side only for UI)
+        // The actual saving logic is handled by the Flask backend
+
+        document.getElementById('show-add-category').addEventListener('click', function () {
+            document.getElementById('new-category-section').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        document.querySelectorAll('.delete-category').forEach(button => {
+            button.addEventListener('click', function () {
+                const categorySection = this.closest('.category-section');
+                const categoryName = this.getAttribute('data-category');
+                if (confirm(`Are you sure you want to delete the category "${categoryName}" and all its links? (确定要删除分类 "${categoryName}" 及其所有链接吗？)`)) {
+                    // Mark for deletion instead of removing immediately
+                    const deletedCategoriesInput = document.getElementById('deleted_categories');
+                    const deletedCategories = deletedCategoriesInput.value ? deletedCategoriesInput.value.split(',') : [];
+                    deletedCategories.push(categoryName);
+                    deletedCategoriesInput.value = deletedCategories.join(',');
+                    categorySection.style.display = 'none'; // Hide the section
+
+                    // Also mark all links within this category as deleted
+                    categorySection.querySelectorAll('.link-entry').forEach(linkEntry => {
+                        const originalUrl = linkEntry.getAttribute('data-original-url');
+                        if (originalUrl) {
+                            const deletedLinksInput = document.getElementById('deleted_links');
+                            const deletedLinks = deletedLinksInput.value ? deletedLinksInput.value.split(',') : [];
+                            deletedLinks.push(`${categoryName}:${originalUrl}`);
+                            deletedLinksInput.value = deletedLinks.join(',');
+                            linkEntry.style.display = 'none'; // Hide the link entry
+                            linkEntry.querySelectorAll('input').forEach(input => input.disabled = true); // Disable inputs
+                        }
+                    });
+                }
+            });
+        });
+
+        // Delete link functionality for existing links
+        document.querySelectorAll('.delete-link').forEach(button => {
+            button.addEventListener('click', function () {
+                const linkEntry = this.closest('.link-entry');
+                const categorySection = this.closest('.category-section');
+                const categoryName = categorySection.getAttribute('data-category');
+                const originalUrl = linkEntry.getAttribute('data-original-url');
+
+                if (originalUrl && confirm(`Are you sure you want to delete this link? (确定要删除此链接吗？)`)) {
+                    const deletedLinksInput = document.getElementById('deleted_links');
+                    const deletedLinks = deletedLinksInput.value ? deletedLinksInput.value.split(',') : [];
+                    deletedLinks.push(`${categoryName}:${originalUrl}`);
+                    deletedLinksInput.value = deletedLinks.join(',');
+                    linkEntry.style.display = 'none'; // Hide the link entry
+                    linkEntry.querySelectorAll('input').forEach(input => input.disabled = true); // Disable inputs
+                }
+            });
+        });
+
+        // Add link functionality for existing categories
+        document.querySelectorAll('.add-link-to-category').forEach(button => {
+            button.addEventListener('click', function () {
+                const categorySection = this.closest('.category-section');
+                const categoryName = categorySection.getAttribute('data-category');
+                const linksContainer = categorySection.querySelector('.links-container');
+                const existingLinksCount = linksContainer.querySelectorAll('.link-entry').length;
+                const newLinkIndex = linksContainer.querySelectorAll('.new-link-entry').length + 1;
+
+                const newLinkHtml = `
+                    <div class="link-entry new-link-entry">
+                        <h4>New Link for ${categoryName} (为 ${categoryName} 添加新链接)</h4>
+                        <input type="hidden" name="new_link_category_${newLinkIndex}" value="${categoryName}">
+                        <input type="hidden" name="link_status_${categoryName}_new_${newLinkIndex}" value="new" class="link-status">
+                        <div class="form-group">
+                            <label for="new_link_name_${categoryName}_${newLinkIndex}">Name: 名称</label>
+                            <input type="text" class="form-control" id="new_link_name_${categoryName}_${newLinkIndex}" name="new_link_name_${categoryName}_${newLinkIndex}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_link_description_${categoryName}_${newLinkIndex}">Description: 描述</label>
+                            <input type="text" class="form-control" id="new_link_description_${categoryName}_${newLinkIndex}" name="new_link_description_${categoryName}_${newLinkIndex}">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_link_url_${categoryName}_${newLinkIndex}">URL: 网址</label>
+                            <input type="text" class="form-control" id="new_link_url_${categoryName}_${newLinkIndex}" name="new_link_url_${categoryName}_${newLinkIndex}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="new_link_icon_${categoryName}_${newLinkIndex}">Icon: 图标</label>
+                            <input type="text" class="form-control" id="new_link_icon_${categoryName}_${newLinkIndex}" name="new_link_icon_${categoryName}_${newLinkIndex}">
+                        </div>
+                        <button type="button" class="btn btn-danger btn-sm remove-new-link">Remove Link (移除链接)</button>
+                    </div>
+                `;
+                linksContainer.insertAdjacentHTML('beforeend', newLinkHtml);
+            });
+        });
+
+        // Remove new link functionality (client-side only)
+        document.addEventListener('click', function (event) {
+            if (event.target && event.target.classList.contains('remove-new-link')) {
+                const linkEntry = event.target.closest('.link-entry');
+                linkEntry.remove();
+            }
+        });
+
+        // Add link functionality for new category (simplified)
+        let newCategoryLinkIndex = 0;
+        document.querySelector('.add-link-to-new-category').addEventListener('click', function () {
+            newCategoryLinkIndex++;
+            const linksContainer = document.getElementById('new-category-links');
+            const newLinkHtml = `
+                <div class="link-entry new-link-entry">
+                    <h4>New Link ${newCategoryLinkIndex} (新链接 ${newCategoryLinkIndex})</h4>
+                    <input type="hidden" name="link_status_new_category_${newCategoryLinkIndex}" value="new" class="link-status">
+                    <div class="form-group">
+                        <label for="new_link_name_${newCategoryLinkIndex}">Name: 名称</label>
+                        <input type="text" class="form-control" id="new_link_name_${newCategoryLinkIndex}" name="new_link_name_${newCategoryLinkIndex}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_link_description_${newCategoryLinkIndex}">Description: 描述</label>
+                        <input type="text" class="form-control" id="new_link_description_${newCategoryLinkIndex}" name="new_link_description_${newCategoryLinkIndex}">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_link_url_${newCategoryLinkIndex}">URL: 网址</label>
+                        <input type="text" class="form-control" id="new_link_url_${newCategoryLinkIndex}" name="new_link_url_${newCategoryLinkIndex}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_link_icon_${newCategoryLinkIndex}">Icon: 图标</label>
+                        <input type="text" class="form-control" id="new_link_icon_${newCategoryLinkIndex}" name="new_link_icon_${newCategoryLinkIndex}">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-new-link">Remove Link (移除链接)</button>
+                </div>
+            `;
+            linksContainer.insertAdjacentHTML('beforeend', newLinkHtml);
+        });
+
+        // Note: Reordering categories or links is not implemented.
+
+
+        // Add event listener for the export button
+        document.getElementById('export-static-page').addEventListener('click', function () {
+            if (confirm('Are you sure you want to export the static page? (确定要导出静态页面吗？)')) {
+                fetch("{{ url_for('export_static') }}", { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Static page exported successfully! (静态页面导出成功！)');
+                        } else {
+                            alert('Error exporting static page: ' + data.message + ' (导出静态页面出错：' + data.message + ')');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred during export. (导出过程中发生错误。)');
+                    });
+            }
+        });
+
+    </script>
+
+    <script src="{{ url_for('static', filename='assets/js/jquery-1.11.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/bootstrap.min.js') }}"></script>
+</body>
+
+</html>

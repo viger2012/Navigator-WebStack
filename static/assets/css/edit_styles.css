@@ -1,0 +1,115 @@
+body {
+    padding: 20px;
+    background-color: #f8f9fa; /* 添加一个浅灰色背景 */
+}
+
+h1 {
+    color: #343a40; /* 深色标题 */
+    margin-bottom: 20px;
+}
+
+form {
+    background-color: #ffffff; /* 表单背景白色 */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+}
+
+.category-section {
+    margin-bottom: 30px;
+    border: 1px solid #ddd; /* 边框 */
+    padding: 20px; /* 增加内边距 */
+    border-radius: 5px;
+    background-color: #e9ecef; /* 分类区域背景色 */
+}
+
+.category-section h3 {
+    margin-top: 0;
+    color: #495057;
+}
+
+.links-container {
+    display: grid; /* 使用 Grid 布局 */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 自动调整列数，最小宽度250px */
+    gap: 15px; /* 设置网格间距 */
+}
+
+.link-entry {
+    /* margin-bottom: 15px; */ /* 移除 margin-bottom，使用 gap 控制间距 */
+    padding: 15px; /* 增加内边距 */
+    border: 1px solid #ccc; /* 边框 */
+    border-radius: 4px;
+    background-color: #f1f1f1; /* 链接条目背景色 */
+    position: relative; /* 用于定位删除按钮 */
+    display: flex; /* 使用 Flexbox 布局内部元素 */
+    flex-direction: column; /* 内部元素垂直排列 */
+}
+
+.link-entry .form-group {
+    margin-bottom: 10px; /* 调整表单组间距 */
+}
+
+.link-entry label {
+    font-weight: bold; /* 标签加粗 */
+    display: block; /* 标签独占一行 */
+    margin-bottom: 5px;
+}
+
+.link-entry input[type="text"] {
+    width: calc(100% - 100px); /* 调整输入框宽度 */
+    display: inline-block; /* 使输入框和删除按钮在同一行 */
+    vertical-align: middle;
+}
+
+.link-entry .delete-link, .link-entry .remove-new-link {
+    position: absolute; /* 绝对定位删除按钮 */
+    top: 10px;
+    right: 10px;
+}
+
+#new-category-section {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px dashed #007bff; /* 新分类区域虚线边框 */
+    border-radius: 5px;
+    background-color: #e2f0ff; /* 新分类区域背景色 */
+}
+
+#new-category-section h3 {
+    margin-top: 0;
+    color: #0056b3;
+}
+
+#new-category-links .link-entry {
+    background-color: #d4edda; /* 新分类下的新链接背景色 */
+}
+
+.btn {
+    margin-right: 5px; /* 按钮间距 */
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* 隐藏已删除的元素 */
+.category-section[style*="display: none"],
+.link-entry[style*="display: none"] {
+    display: none !important;
+}
